@@ -1,0 +1,19 @@
+{
+  "name": "ImageResizer",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/SimDaeSoo/ImageResizer.git",
+  "author": "bigdeal <bigdeal@smartstudy.co.kr>",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "start": "ts-node src/index.ts"
+  },
+  "dependencies": {
+    "@types/node": "^14.14.6",
+    "@types/sharp": "^0.26.0",
+    "sharp": "^0.26.2",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.0.5"
+  }
+}
