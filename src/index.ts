@@ -4,10 +4,12 @@ import sharp from 'sharp';
 interface ImageProcessTask {
   src: string;
   dst: string;
-  resolution: {
-    width: number;
-    height: number;
-  }
+  resolution: Resolution;
+}
+
+interface Resolution {
+  width: number;
+  height: number;
 }
 
 async function main(): Promise<void> {
@@ -58,48 +60,49 @@ async function processing(task: ImageProcessTask): Promise<void> {
   });
 }
 
+function isImageFile(path: string): boolean {
+  const matched: Array<string> | null = path.match(/.png|.jpg|.jpeg/g);
+  return matched !== null && matched.length > 0;
+}
+
 function getImageProcessTasks(input: string, output: string): Array<ImageProcessTask> {
   const imageProcessTasks: Array<ImageProcessTask> = [];
+  const files: Array<string> = getFiles(input);
 
-  const dirs: Array<string> = getDirs(input);
-  for (const dir of dirs) {
-    const [width, height]: Array<string> = dir.split('x');
-    const images: Array<string> = getImages(`${input}/${dir}`);
-    const tasks: Array<ImageProcessTask> = images.map((image: string): ImageProcessTask => {
-      return {
-        src: `${input}/${dir}/${image}`,
-        dst: `${output}/${dir}/${image}`,
-        resolution: {
-          width: Number(width),
-          height: Number(height)
-        }
-      }
-    });
-
-    imageProcessTasks.push(...tasks)
+  for (const file of files) {
+    if (isImageFile(file)) {
+      const resolution: Resolution = getTargetResolution(file);
+      const task: ImageProcessTask = { resolution, src: file, dst: file.replace(input, output) };
+      imageProcessTasks.push(task);
+    }
   }
 
   return imageProcessTasks;
 }
 
-function getDirs(path: string): Array<string> {
-  const dirs: Array<string> = fs.readdirSync(path);
-  return dirs.reduce((acc: Array<string>, val: string): Array<string> => {
-    if (val.indexOf('.') < 0) {
-      acc.push(val);
-    }
-    return acc;
-  }, []);
+function getTargetResolution(path: string): Resolution {
+  const paths: Array<string> = path.split('/');
+  const parent: Array<string> = paths.slice(-2, -1);
+  const [width, height]: Array<string> = parent[0].split('x');
+
+  return { width: Number(width), height: Number(height) };
 }
 
-function getImages(path: string): Array<string> {
-  const dirs: Array<string> = fs.readdirSync(path);
-  return dirs.reduce((acc: Array<string>, val: string): Array<string> => {
-    if (val.match(/png|jpg|jpeg/g)) {
-      acc.push(val);
+function getFiles(path: string): Array<string> {
+  const files: Array<string> = [];
+
+  for (const file of fs.readdirSync(path)) {
+    const filepath: string = `${path}/${file}`;
+    const filestat: fs.Stats = fs.statSync(filepath);
+
+    if (filestat.isDirectory()) {
+      files.push(...getFiles(filepath));
+    } else {
+      files.push(filepath);
     }
-    return acc;
-  }, []);
+  }
+
+  return files;
 }
 
 main();
